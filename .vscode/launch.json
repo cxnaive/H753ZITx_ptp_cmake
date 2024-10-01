@@ -27,6 +27,64 @@
             "serverArgs": [
                 "-m","0",
             ],
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            },
+            //"preLaunchTask": "Build + Flash"
+            /* If you use external loader, add additional arguments */
+            //"serverArgs": ["--extload", "path/to/ext/loader.stldr"],
+        },
+        {
+            "name": "Build & Debug Microcontroller - ST-Link - OpenOCD",
+            "cwd": "${workspaceFolder}",
+            "type": "cortex-debug",
+            "executable": "${command:cmake.launchTargetPath}",
+            // Let CMake extension decide executable: "${command:cmake.launchTargetPath}"
+            // Or fixed file path: "${workspaceFolder}/path/to/filename.elf"
+            "request": "launch",
+            "servertype": "openocd",
+            "configFiles": [
+                "${workspaceFolder}/h753zitx.cfg"
+            ],
+            "device": "STM32H753ZITx", //MCU used
+            "interface": "swd",
+            "serialNumber": "",        //Set ST-Link ID if you use multiple at the same time
+            "runToEntryPoint": "main",
+            "svdFile": "${config:STM32VSCodeExtension.cubeCLT.path}/STMicroelectronics_CMSIS_SVD/STM32H753.svd",
+            "v1": false,               //Change it depending on ST Link version
+            // "serverpath": "C:\\Program Files (x86)\\xpack-openocd-0.12.0-4\\bin\\openocd.exe",
+            "serverpath": "C:\\ST\\STM32CubeIDE_1.16.1\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.3.200.202404091248\\tools\\bin\\openocd.exe",
+            "stm32cubeprogrammer":"${config:STM32VSCodeExtension.cubeCLT.path}/STM32CubeProgrammer/bin",
+            "stlinkPath": "${config:STM32VSCodeExtension.cubeCLT.path}/STLink-gdb-server/bin/ST-LINK_gdbserver",   
+            "armToolchainPath": "${config:STM32VSCodeExtension.cubeCLT.path}/GNU-tools-for-STM32/bin",
+            "gdbPath":"${config:STM32VSCodeExtension.cubeCLT.path}/GNU-tools-for-STM32/bin/arm-none-eabi-gdb",            
+            "serverArgs": [
+                "-s","C:\\ST\\STM32CubeIDE_1.16.1\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.debug.openocd_2.2.100.202406131243\\resources\\openocd\\st_scripts",
+                // "-c", "itm ports on",
+                // "-c", "tpiu config internal - uart off 96000000",
+                // "-c", "gdb_report_data_abort enable",
+            ],
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            },
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 48000000,
+                "swoFrequency": 24000000,
+                "source": "socket",
+                "decoders": [
+                    { 
+                        "type": "console",
+                        "label": "ITM",
+                        "showOnStartup": true,
+                        "port": 0,
+                        "encoding": "ascii"
+                    }
+                ]
+            },
+            "showDevDebugOutput": "raw"
             //"preLaunchTask": "Build + Flash"
             /* If you use external loader, add additional arguments */
             //"serverArgs": ["--extload", "path/to/ext/loader.stldr"],

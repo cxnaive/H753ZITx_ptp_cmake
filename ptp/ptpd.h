@@ -132,4 +132,5 @@ void ptpd_init(void);
 void ptpd_task(void);
 void ptpd_alert(void);
 
+void updatePTPTimers(void);
 #endif /* PTPD_H_*/

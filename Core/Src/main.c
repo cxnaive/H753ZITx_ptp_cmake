@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ptpd.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,7 +73,10 @@ void StartDefaultTask(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int __io_putchar(int ch){
+  HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 0xFFFF);
+  return ch;
+}
 /* USER CODE END 0 */
 
 /**
@@ -118,7 +122,6 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
   /* USER CODE BEGIN 2 */
-
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -397,14 +400,24 @@ void StartDefaultTask(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
+  printf("Starting PTP.....\n");
+  osDelay(1000);
   ptpd_init();
   /* Infinite loop */
+  TickType_t xLastWakeTime;
+  const TickType_t xFrequency = pdMS_TO_TICKS(1); // 周期1ms
+  xLastWakeTime = xTaskGetTickCount();
+  int led_cnt = 0;
   for(;;)
   {
-//	MX_LWIP_Process();
-	HAL_GPIO_TogglePin(GPIOB, LD1_Pin);
-    osDelay(500);
-//    ptpd_task();
+    ++led_cnt;
+    if (led_cnt > 500){
+      HAL_GPIO_TogglePin(GPIOB, LD1_Pin);
+      led_cnt = 0;
+    }
+    ptpd_task();
+	  updatePTPTimers();
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);
   }
   /* USER CODE END 5 */
 }

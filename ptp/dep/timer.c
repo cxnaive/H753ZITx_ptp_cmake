@@ -60,3 +60,20 @@ bool timerExpired(int32_t index)
 
 	return TRUE;
 }
+
+void updatePTPTimers(void){
+  for(uint8_t i = 0;i < TIMER_ARRAY_SIZE; ++i){
+    switch (ptpdTimersCounter[i])
+    {
+        case 0:
+        break;
+        case 1:
+        ptpdTimersExpired[i] = TRUE;
+        ptpdTimersCounter[i] = ptpdTimers[i];
+        break;
+        default :
+        ptpdTimersCounter[i]--;
+        break;
+    }
+  }
+}

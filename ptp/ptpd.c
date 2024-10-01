@@ -56,7 +56,7 @@ void ptpd_init(void)
 	// Initialize run time options.
 	if (ptpdStartup(&ptpClock, &rtOpts, ptpForeignRecords) != 0)
 	{
-		printf("PTPD: startup failed");
+		printf("PTPD: startup failed\n");
 		return;
 	}
 }
