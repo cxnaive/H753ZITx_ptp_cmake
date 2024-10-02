@@ -213,10 +213,11 @@ static void low_level_init(struct netif *netif)
   HAL_StatusTypeDef hal_eth_init_status = HAL_OK;
 /* USER CODE BEGIN OS_THREAD_ATTR_CMSIS_RTOS_V2 */
   osThreadAttr_t attributes;
-  ETH_DMAConfigTypeDef dma_config = {0};
+  ETH_MACFilterConfigTypeDef Mac_Fliter;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
   uint32_t duplex, speed = 0;
   int32_t PHYLinkState = 0;
+  ETH_DMAConfigTypeDef dma_config = {0};
   ETH_MACConfigTypeDef MACConf = {0};
   /* Start ETH HAL Init */
 
@@ -235,7 +236,19 @@ static void low_level_init(struct netif *netif)
   heth.Init.RxBuffLen = 1536;
 
   /* USER CODE BEGIN MACADDRESS */
-
+  // Enable enhanced descriptors for timestamp reception
+  dma_config.DMAArbitration = ETH_DMAARBITRATION_TX1_RX1;
+  dma_config.AddressAlignedBeats = ENABLE;
+  dma_config.BurstMode = ETH_BURSTLENGTH_UNSPECIFIED;
+  dma_config.RebuildINCRxBurst = ENABLE;  /// ???
+  dma_config.PBLx8Mode = DISABLE;
+  dma_config.TxDMABurstLength = ETH_TXDMABURSTLENGTH_32BEAT;
+  dma_config.SecondPacketOperate = ENABLE;
+  dma_config.RxDMABurstLength = ETH_RXDMABURSTLENGTH_32BEAT;
+  dma_config.FlushRxPacket = ENABLE;
+  dma_config.TCPSegmentation = DISABLE;
+  dma_config.MaximumSegmentSize = 0;
+  HAL_ETH_SetDMAConfig(&heth, &dma_config);
   /* USER CODE END MACADDRESS */
 
   hal_eth_init_status = HAL_ETH_Init(&heth);
@@ -282,18 +295,6 @@ static void low_level_init(struct netif *netif)
 
   /* create the task that handles the ETH_MAC */
 /* USER CODE BEGIN OS_THREAD_NEW_CMSIS_RTOS_V2 */
-  dma_config.DMAArbitration = ETH_DMAARBITRATION_TX1_RX1;
-  dma_config.AddressAlignedBeats = ENABLE;
-  dma_config.BurstMode = ETH_BURSTLENGTH_UNSPECIFIED;
-  dma_config.RebuildINCRxBurst = ENABLE;  /// ???
-  dma_config.PBLx8Mode = DISABLE;
-  dma_config.TxDMABurstLength = ETH_TXDMABURSTLENGTH_32BEAT;
-  dma_config.SecondPacketOperate = ENABLE;
-  dma_config.RxDMABurstLength = ETH_RXDMABURSTLENGTH_32BEAT;
-  dma_config.FlushRxPacket = ENABLE;
-  dma_config.TCPSegmentation = DISABLE;
-  dma_config.MaximumSegmentSize = 0;
-  HAL_ETH_SetDMAConfig(&heth, &dma_config);
 
   netif->flags |=  NETIF_FLAG_IGMP;
 
@@ -305,7 +306,10 @@ static void low_level_init(struct netif *netif)
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN PHY_PRE_CONFIG */
-
+  HAL_ETH_GetMACFilterConfig(&heth,&Mac_Fliter);
+  Mac_Fliter.PassAllMulticast=ENABLE;
+  Mac_Fliter.ReceiveAllMode=ENABLE;
+  HAL_ETH_SetMACFilterConfig(&heth,&Mac_Fliter);
 /* USER CODE END PHY_PRE_CONFIG */
   /* Set PHY IO functions */
   LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);

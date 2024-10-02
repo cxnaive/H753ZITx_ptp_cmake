@@ -1045,6 +1045,7 @@ HAL_StatusTypeDef HAL_ETH_ReadData(ETH_HandleTypeDef *heth, void **pAppBuff)
   uint32_t desccntmax;
   uint32_t bufflength;
   uint8_t rxdataready = 0U;
+  uint8_t expecting_ts = 0;
 
   if (pAppBuff == NULL)
   {
@@ -1062,49 +1063,58 @@ HAL_StatusTypeDef HAL_ETH_ReadData(ETH_HandleTypeDef *heth, void **pAppBuff)
   desccntmax = ETH_RX_DESC_CNT - heth->RxDescList.RxBuildDescCnt;
 
   /* Check if descriptor is not owned by DMA */
-  while ((READ_BIT(dmarxdesc->DESC3, ETH_DMARXNDESCWBF_OWN) == (uint32_t)RESET) && (desccnt < desccntmax)
-         && (rxdataready == 0U))
+  while (!READ_BIT(dmarxdesc->DESC3, ETH_DMARXNDESCWBF_OWN)
+    && desccnt < desccntmax
+    && !rxdataready)
   {
     if (READ_BIT(dmarxdesc->DESC3,  ETH_DMARXNDESCWBF_CTXT)  != (uint32_t)RESET)
     {
-      /* Get timestamp high */
-      heth->RxDescList.TimeStamp.TimeStampHigh = dmarxdesc->DESC1;
-      /* Get timestamp low */
-      heth->RxDescList.TimeStamp.TimeStampLow  = dmarxdesc->DESC0;
-    }
-    if ((READ_BIT(dmarxdesc->DESC3, ETH_DMARXNDESCWBF_FD) != (uint32_t)RESET) || (heth->RxDescList.pRxStart != NULL))
-    {
-      /* Check if first descriptor */
-      if (READ_BIT(dmarxdesc->DESC3, ETH_DMARXNDESCWBF_FD) != (uint32_t)RESET)
+      if (expecting_ts)
       {
-        heth->RxDescList.RxDescCnt = 0;
-        heth->RxDescList.RxDataLength = 0;
-      }
-
-      /* Get the Frame Length of the received packet: substruct 4 bytes of the CRC */
-      bufflength = READ_BIT(dmarxdesc->DESC3, ETH_DMARXNDESCWBF_PL) - heth->RxDescList.RxDataLength;
-
-      /* Check if last descriptor */
-      if (READ_BIT(dmarxdesc->DESC3, ETH_DMARXNDESCWBF_LD) != (uint32_t)RESET)
-      {
-        /* Save Last descriptor index */
-        heth->RxDescList.pRxLastRxDesc = dmarxdesc->DESC3;
-
-        /* Packet ready */
+        /* Get timestamp high */
+        heth->RxDescList.TimeStamp.TimeStampHigh = dmarxdesc->DESC1;
+        /* Get timestamp low */
+        heth->RxDescList.TimeStamp.TimeStampLow  = dmarxdesc->DESC0;
         rxdataready = 1;
       }
+    }
+    else
+    {
+      if ((READ_BIT(dmarxdesc->DESC3, ETH_DMARXNDESCWBF_FD) != (uint32_t)RESET) || (heth->RxDescList.pRxStart != NULL))
+      {
+        /* Check if first descriptor */
+        if (READ_BIT(dmarxdesc->DESC3, ETH_DMARXNDESCWBF_FD) != (uint32_t)RESET)
+        {
+          heth->RxDescList.RxDataLength = 0;
+        }
 
-      /* Link data */
-#if (USE_HAL_ETH_REGISTER_CALLBACKS == 1)
-      /*Call registered Link callback*/
-      heth->rxLinkCallback(&heth->RxDescList.pRxStart, &heth->RxDescList.pRxEnd,
-                           (uint8_t *)dmarxdesc->BackupAddr0, bufflength);
-#else
+        /* Check if last descriptor */
+        bufflength = heth->Init.RxBuffLen;
+        if (READ_BIT(dmarxdesc->DESC3, ETH_DMARXNDESCWBF_LD) != (uint32_t)RESET)
+        {
+          bufflength = READ_BIT(dmarxdesc->DESC3, ETH_DMARXNDESCWBF_PL) - heth->RxDescList.RxDataLength;
+
+          /* Save Last descriptor index */
+          heth->RxDescList.pRxLastRxDesc = dmarxdesc->DESC3;
+
+          /* Packet ready */
+          if (!READ_BIT(dmarxdesc->DESC1, (1 << 14)))
+          {
+            rxdataready = 1;
+          }
+          else
+          {
+            expecting_ts = 1;
+          }
+        }
+      }
+
       /* Link callback */
-      HAL_ETH_RxLinkCallback(&heth->RxDescList.pRxStart, &heth->RxDescList.pRxEnd,
-                             (uint8_t *)dmarxdesc->BackupAddr0, (uint16_t) bufflength);
-#endif  /* USE_HAL_ETH_REGISTER_CALLBACKS */
-      heth->RxDescList.RxDescCnt++;
+      HAL_ETH_RxLinkCallback(&heth->RxDescList.pRxStart,
+        &heth->RxDescList.pRxEnd,
+        (uint8_t *)dmarxdesc->BackupAddr0,
+        (uint16_t) bufflength);
+
       heth->RxDescList.RxDataLength += bufflength;
 
       /* Clear buffer pointer */

@@ -26,7 +26,7 @@
 #define DEFAULT_DELAY_S                 6 /* exponencial smoothing - 2^s */
 #define DEFAULT_OFFSET_S                1 /* exponencial smoothing - 2^s */
 #define DEFAULT_ANNOUNCE_INTERVAL       1 /* 0 in 802.1AS */
-#define DEFAULT_UTC_OFFSET              34
+#define DEFAULT_UTC_OFFSET              36
 #define DEFAULT_UTC_VALID               FALSE
 #define DEFAULT_PDELAYREQ_INTERVAL      1 /* -4 in 802.1AS */
 #define DEFAULT_DELAYREQ_INTERVAL       3 /* from DEFAULT_SYNC_INTERVAL to DEFAULT_SYNC_INTERVAL + 5 */
@@ -44,7 +44,7 @@
 #define DEFAULT_CLOCK_VARIANCE          5000 /* To be determined in 802.1AS */
 #define DEFAULT_MAX_FOREIGN_RECORDS     5
 #define DEFAULT_PARENTS_STATS           FALSE
-#define DEFAULT_TWO_STEP_FLAG           TRUE /* Transmitting only SYNC message or SYNC and FOLLOW UP */
+#define DEFAULT_TWO_STEP_FLAG           FALSE /* Transmitting only SYNC message or SYNC and FOLLOW UP */
 #define DEFAULT_TIME_SOURCE             INTERNAL_OSCILLATOR
 #define DEFAULT_TIME_TRACEABLE          FALSE /* time derived from atomic clock? */
 #define DEFAULT_FREQUENCY_TRACEABLE     FALSE /* frequency derived from frequency standard? */

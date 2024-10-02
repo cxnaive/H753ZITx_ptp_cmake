@@ -219,6 +219,12 @@ struct pbuf {
 
   /** For incoming packets, this contains the input netif's index */
   u8_t if_idx;
+
+  #ifdef LWIP_PTP
+  s32_t time_sec;
+  s32_t time_nsec;
+  #endif
+
 };
 
 

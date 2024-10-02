@@ -133,7 +133,6 @@ static void netRecvEventCallback(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 																 struct ip_addr *addr, u16_t port)
 {
 	NetPath *netPath = (NetPath *) arg;
-
 	/* Place the incoming message on the Event Port QUEUE. */
 	if (!netQPut(&netPath->eventQ, p))
 	{
@@ -215,7 +214,6 @@ bool netInit(NetPath *netPath, PtpClock *ptpClock)
 
 	/* Join multicast group (for receiving) on specified interface */
 	igmp_joingroup(&interfaceAddr, (struct ip_addr *)&netAddr);
-
 	/* Init Peer multicast IP address */
 	memcpy(addrStr, PEER_PTP_DOMAIN_ADDRESS, NET_ADDRESS_LENGTH);
 	if (!inet_aton(addrStr, &netAddr))
