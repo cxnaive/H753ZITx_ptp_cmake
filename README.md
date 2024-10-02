@@ -9,10 +9,13 @@ thanks to:
 - https://github.com/stm32-hotspot/STM32H7-LwIP-Examples
 
 Using STM32CubeMX + LWIP to generate this CMAKE-Based project.
-messages will output to on board ST-LINK's VCP Serial Port
+
+Messages will output to the on board ST-LINK's VCP Serial Port
 
 ## Performance
+![image](https://github.com/cxnaive/H753ZITx_ptp_cmake/blob/main/doc/slave_demo.png)
 
+average accuracy in ~50ns (offset less than 100ns)
 
 ## TODO
 - use ETH DMA to get/set timestamp (LWIP_PTP)
