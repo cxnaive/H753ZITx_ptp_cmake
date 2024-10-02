@@ -1,6 +1,6 @@
-# 1EEE1588v2 PTP Example for STM32H753ZITx (NUCLEO-H753ZI)
+# 1EEE1588v2 PTP Example for STM32H753ZITx
 
-PTP Demo for STM32H753 (NUCLEO-H753ZI)
+PTP Demo for STM32H753 (test on board NUCLEO-H753ZI)
 
 ## Features
 thanks to: 
