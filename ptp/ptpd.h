@@ -43,7 +43,7 @@
 
 #define max(a, b)           (((a) > (b)) ?  (a) : (b))
 #define min(a, b)           (((a) < (b)) ?  (a) : (b))
-
+#define PTP_TIMESTAMP_RECORD_MAGIC 0x55667788
 /**
  * \brief Convert scaled nanoseconds into TimeInternal structure
  */

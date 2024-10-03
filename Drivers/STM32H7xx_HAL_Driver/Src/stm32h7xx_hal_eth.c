@@ -1123,12 +1123,14 @@ HAL_StatusTypeDef HAL_ETH_ReadData(ETH_HandleTypeDef *heth, void **pAppBuff)
 
     /* Increment current rx descriptor index */
     INCR_RX_DESC_INDEX(descidx, 1U);
+
     /* Get current descriptor address */
     dmarxdesc = (ETH_DMADescTypeDef *)heth->RxDescList.RxDesc[descidx];
     desccnt++;
   }
 
   heth->RxDescList.RxBuildDescCnt += desccnt;
+
   if ((heth->RxDescList.RxBuildDescCnt) != 0U)
   {
     /* Update Descriptors */
@@ -1225,7 +1227,7 @@ static void ETH_UpdateDescriptor(ETH_HandleTypeDef *heth)
     __DMB();
 
     /* Set the Tail pointer address */
-    WRITE_REG(heth->Instance->DMACRDTPR, ((uint32_t)(heth->Init.RxDesc + (tailidx))));
+    WRITE_REG(heth->Instance->DMACRDTPR, 0);
 
     heth->RxDescList.RxBuildDescIdx = descidx;
     heth->RxDescList.RxBuildDescCnt = desccount;

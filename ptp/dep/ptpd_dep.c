@@ -330,7 +330,7 @@ void ETH_PTPTimeStampCmd(FunctionalState NewState)
 	if (NewState != DISABLE)
 	{
 		/* Enable the PTP time stamp for transmit and receive frames */
-		ETH->MACTSCR |= ETH_MACTSCR_TSENA;
+		ETH->MACTSCR |= ETH_MACTSCR_TSENA | ETH_MACTSCR_TSENALL;
 		//ETH->MACTSCR |= ETH_MACTSCR_TSENA | ETH_MACTSCR_TSIPV4ENA | ETH_MACTSCR_TSIPV6ENA | ETH_MACTSCR_TSENALL;
 	}
 	else

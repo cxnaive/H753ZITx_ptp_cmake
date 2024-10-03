@@ -365,7 +365,10 @@ static ssize_t netSend(const octet_t *buf, int16_t  length, TimeInternal *time, 
 		ERROR("netSend: Failed to copy data to Pbuf (%d)\n", result);
 		goto fail02;
 	}
-
+#ifdef LWIP_PTP
+	p->time_sec = PTP_TIMESTAMP_RECORD_MAGIC;
+	p->time_nsec = PTP_TIMESTAMP_RECORD_MAGIC;
+#endif
 	/* send the buffer. */
 	result = udp_sendto(pcb, p, (void *)addr, pcb->local_port);
 	if (ERR_OK != result)

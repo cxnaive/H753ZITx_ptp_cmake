@@ -385,7 +385,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+extern ETH_HandleTypeDef heth;
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -401,8 +401,9 @@ void StartDefaultTask(void *argument)
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
   printf("Starting PTP.....\n");
-  osDelay(1000);
   ptpd_init();
+  osDelay(1000);
+  heth.IsPtpConfigured = HAL_ETH_PTP_CONFIGURED;
   /* Infinite loop */
   TickType_t xLastWakeTime;
   const TickType_t xFrequency = pdMS_TO_TICKS(1); // 周期1ms

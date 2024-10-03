@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "main.h": "c",
-        "cmsis_os.h": "c"
+        "cmsis_os.h": "c",
+        "ptpd.h": "c"
     }
 }

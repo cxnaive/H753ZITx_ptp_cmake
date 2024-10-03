@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
-add_definitions(-DPTPD_DBG)
+add_definitions(-DPTPD_DBG -DHAL_ETH_USE_PTP -DLWIP_PTP)
 
 # Define the build type
 if(NOT CMAKE_BUILD_TYPE)

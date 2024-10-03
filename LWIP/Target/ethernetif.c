@@ -33,7 +33,7 @@
 
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */
-
+#include "ptpd.h"
 /* USER CODE END 0 */
 
 /* Private define ------------------------------------------------------------*/
@@ -195,7 +195,12 @@ void HAL_ETH_ErrorCallback(ETH_HandleTypeDef *handlerEth)
 }
 
 /* USER CODE BEGIN 4 */
-
+static uint32_t SubsecondToNanosecond(const uint32_t subsecond_value)
+{
+  uint64_t val = subsecond_value * 1000000000ll;
+  val >>= 31;
+  return val;
+}
 /* USER CODE END 4 */
 
 /*******************************************************************************
@@ -236,19 +241,7 @@ static void low_level_init(struct netif *netif)
   heth.Init.RxBuffLen = 1536;
 
   /* USER CODE BEGIN MACADDRESS */
-  // Enable enhanced descriptors for timestamp reception
-  dma_config.DMAArbitration = ETH_DMAARBITRATION_TX1_RX1;
-  dma_config.AddressAlignedBeats = ENABLE;
-  dma_config.BurstMode = ETH_BURSTLENGTH_UNSPECIFIED;
-  dma_config.RebuildINCRxBurst = ENABLE;  /// ???
-  dma_config.PBLx8Mode = DISABLE;
-  dma_config.TxDMABurstLength = ETH_TXDMABURSTLENGTH_32BEAT;
-  dma_config.SecondPacketOperate = ENABLE;
-  dma_config.RxDMABurstLength = ETH_RXDMABURSTLENGTH_32BEAT;
-  dma_config.FlushRxPacket = ENABLE;
-  dma_config.TCPSegmentation = DISABLE;
-  dma_config.MaximumSegmentSize = 0;
-  HAL_ETH_SetDMAConfig(&heth, &dma_config);
+  
   /* USER CODE END MACADDRESS */
 
   hal_eth_init_status = HAL_ETH_Init(&heth);
@@ -295,7 +288,19 @@ static void low_level_init(struct netif *netif)
 
   /* create the task that handles the ETH_MAC */
 /* USER CODE BEGIN OS_THREAD_NEW_CMSIS_RTOS_V2 */
-
+  // Enable enhanced descriptors for timestamp reception
+  dma_config.DMAArbitration = ETH_DMAARBITRATION_TX1_RX1;
+  dma_config.AddressAlignedBeats = ENABLE;
+  dma_config.BurstMode = ETH_BURSTLENGTH_UNSPECIFIED;
+  dma_config.RebuildINCRxBurst = ENABLE;  /// ???
+  dma_config.PBLx8Mode = DISABLE;
+  dma_config.TxDMABurstLength = ETH_TXDMABURSTLENGTH_32BEAT;
+  dma_config.SecondPacketOperate = ENABLE;
+  dma_config.RxDMABurstLength = ETH_RXDMABURSTLENGTH_32BEAT;
+  dma_config.FlushRxPacket = ENABLE;
+  dma_config.TCPSegmentation = DISABLE;
+  dma_config.MaximumSegmentSize = 0;
+  HAL_ETH_SetDMAConfig(&heth, &dma_config);
   netif->flags |=  NETIF_FLAG_IGMP;
 
   memset(&attributes, 0x0, sizeof(osThreadAttr_t));
@@ -407,6 +412,9 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
   struct pbuf *q = NULL;
   err_t errval = ERR_OK;
   ETH_BufferTypeDef Txbuffer[ETH_TX_DESC_CNT] = {0};
+#ifdef LWIP_PTP
+  bool is_timestamp_requested = p->time_sec == PTP_TIMESTAMP_RECORD_MAGIC && p->time_nsec == PTP_TIMESTAMP_RECORD_MAGIC;
+#endif
 
   memset(Txbuffer, 0 , ETH_TX_DESC_CNT*sizeof(ETH_BufferTypeDef));
 
@@ -439,8 +447,24 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
   do
   {
+
+#ifdef LWIP_PTP
+    if(is_timestamp_requested){
+      HAL_ETH_PTP_InsertTxTimestamp(&heth);
+    }
+#endif
+
     if(HAL_ETH_Transmit_IT(&heth, &TxConfig) == HAL_OK)
     {
+
+#ifdef LWIP_PTP
+      osSemaphoreAcquire(TxPktSemaphore, ETHIF_TX_TIMEOUT);
+      HAL_ETH_ReleaseTxPacket(&heth);
+      if(is_timestamp_requested){
+        p->time_sec = heth.TxTimestamp.TimeStampHigh;
+        p->time_nsec = SubsecondToNanosecond(heth.TxTimestamp.TimeStampLow);
+      }
+#endif
       errval = ERR_OK;
     }
     else
@@ -499,6 +523,10 @@ void ethernetif_input(void* argument)
   struct pbuf *p = NULL;
   struct netif *netif = (struct netif *) argument;
 
+#ifdef LWIP_PTP
+  ETH_TimeStampTypeDef eth_timestamp;
+#endif
+
   for( ;; )
   {
     if (osSemaphoreAcquire(RxPktSemaphore, TIME_WAITING_FOR_INPUT) == osOK)
@@ -508,6 +536,13 @@ void ethernetif_input(void* argument)
         p = low_level_input( netif );
         if (p != NULL)
         {
+#ifdef LWIP_PTP
+          // Collect the timestamp of the new packet
+          HAL_ETH_PTP_GetRxTimestamp(&heth, &eth_timestamp);
+          // printf("%u %u\n", eth_timestamp.TimeStampHigh, eth_timestamp.TimeStampLow);
+          p->time_sec = eth_timestamp.TimeStampHigh;
+          p->time_nsec = SubsecondToNanosecond(eth_timestamp.TimeStampLow);
+#endif
           if (netif->input( p, netif) != ERR_OK )
           {
             pbuf_free(p);
